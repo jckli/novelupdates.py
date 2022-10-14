@@ -148,10 +148,21 @@ def parseSeries(req):
 
     associatedNames = [i for i in tt.find("div", id="editassociated").contents if str(i) != "<br/>"]
 
-    tableBody = tt.find("table", id="myTable")
+    groups = []
+    if soup.find("ol", class_="sp_grouptable") is not None:
+        for g in soup.find("ol", class_="sp_grouptable").find_all("li"):
+            name = g.find("span", style="padding-left:20px;").get("title")
+            temp = name.replace(" ", "-").lower()
+            temp2 = re.sub(r'[^\w\s]', '', temp)
+            link = f"https://www.novelupdates.com/group/{temp2}"
+            groups.append({"name": name, "link": link})
+    else:
+        groups = None
+
+
     latestChapters = []
-    if tableBody is not None:
-        for rel in tableBody.find("tbody").find_all("tr"):
+    if tt.find("table", id="myTable") is not None:
+        for rel in tt.find("table", id="myTable").find("tbody").find_all("tr"):
             date = re.sub('\s+', '', rel.select("td")[0].text)
             group = rel.select("td")[1].find("a").text
             groupLink = rel.select("td")[1].find("a").get("href")
