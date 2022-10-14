@@ -84,6 +84,8 @@ def parseSeries(req):
     tt = body.find("div", class_="two-thirds").find("div", class_="wpb_text_column").find("div", class_="wpb_wrapper")
 
     title = page.find("div", class_="seriestitlenu").text
+
+    # One Third (ot)
     image = ot.find("div", class_="seriesimg").find("img").get("src")
     typeRaw = ot.find("div", id="showtype")
     typeText = typeRaw.find("a").text + " " + typeRaw.find("span").text
@@ -123,7 +125,8 @@ def parseSeries(req):
     year = ot.find("div", id="edityear").text[1:]
     statusRaw = ot.find("div", id="editstatus")
     if "<br>" in statusRaw:
-        statusRaw.find("br").replace_with("\n")
+        for br in statusRaw.find_all("br"):
+            br.replace_with("\n")
     status = statusRaw.text[1:]
     licensed = ot.find("div", id="showlicensed").text[1:]
     completelyTranslated = ot.find("div", id="showtranslated").text[1:]
@@ -137,6 +140,15 @@ def parseSeries(req):
         englishPublisher = {"name": ot.find("div", id="showepublisher").text[1:], "link": None}
     releaseFreq = ot.find_all("h5", class_="seriesother")[13].next_sibling.strip()
 
+    # Two Thirds (tt)
+    descriptionRaw = tt.find("div", id="editdescription")
+    if "<br>" in descriptionRaw:
+        for br in descriptionRaw.find_all("br"):
+            br.replace_with("\n")
+    description = descriptionRaw.text[:-1]
+
+    associatedNames = [i for i in tt.find("div", id="editassociated").contents if str(i) != "<br/>"]
+    
     result = {
         "title": title,
         "image": image,
@@ -153,6 +165,8 @@ def parseSeries(req):
         "completely_translated": completelyTranslated,
         "original_publisher": originalPublisher,
         "english_publisher": englishPublisher,
-        "release_freq": releaseFreq
+        "release_freq": releaseFreq,
+        "description": description,
+        "associated_names": associatedNames
     }
     return result
