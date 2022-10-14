@@ -8,17 +8,21 @@ def parseFeed(req):
         for entry in table.find("tbody").find_all("tr"):
             title = entry.select("td")[0].find("a").get("title")
             nuLink = entry.select("td")[0].find("a").get("href")
-            chapter = entry.select("td")[1].find("a").get("title")
-            chapterLink = f'https:{entry.select("td")[1].find("a").get("href")}'
+            release = entry.select("td")[1].find("a").get("title")
+            releaseLink = f'https:{entry.select("td")[1].find("a").get("href")}'
             groupName = entry.select("td")[2].find("a").get("title")
             groupLink = entry.select("td")[2].find("a").get("href")
             feed.append({
                 "title": title,
                 "nuLink": nuLink,
-                "chapter": chapter,
-                "chapterLink": chapterLink,
-                "groupName": groupName,
-                "groupLink": groupLink
+                "group": {
+                    "name": groupName,
+                    "link": groupLink
+                },
+                "release": {
+                    "name": release,
+                    "link": releaseLink
+                }
             })
     return feed
 
@@ -46,7 +50,7 @@ def parseSearch(req):
         description = ogDescription + moreDescription.text
 
         stats = body.find("div", class_="search_stats").find_all("span", class_="ss_desk")
-        chapters = stats[0].text.strip()
+        releases = stats[0].text.strip()
         updateFreq = stats[1].text.strip()
         nuReaders = stats[2].text.strip()
         nuReviews = stats[3].text.strip()
@@ -67,7 +71,7 @@ def parseSearch(req):
             "image": image,
             "search_rating": searchRating,
             "description": description[:-1],
-            "chapters": chapters,
+            "releases": releases,
             "update_freq": updateFreq,
             "nu_readers": nuReaders,
             "nu_reviews": nuReviews,
@@ -110,17 +114,12 @@ def parseSeries(req):
     language = {"name": ot.find("div", id="showlang").find("a").text, "link": ot.find("div", id="showlang").find("a").get("href")}
 
     authors = []
-    if ot.find("div", id="showauthors").find_all("a"):
-        for author in ot.find("div", id="showauthors").find_all("a"):
-            authors.append({"name": author.text, "link": author.get("href")})
-    else:
-        authors.append({"name": ot.find("div", id="showauthors").find("span").text[0:], "link": None})
+    for author in ot.find("div", id="showauthors").find_all("a"):
+        authors.append({"name": author.text, "link": author.get("href")})
+
     artists = []
-    if ot.find("div", id="showartists").find_all("a"):
-        for artist in ot.find("div", id="showartists").find_all("a"):
-            artists.append({"name": artist.text, "link": artist.get("href")})
-    else:
-        artists.append({"name": ot.find("div", id="showartists").find("span").text[0:], "link": None})
+    for artist in ot.find("div", id="showartists").find_all("a"):
+        artists.append({"name": artist.text, "link": artist.get("href")})
     
     year = ot.find("div", id="edityear").text[1:]
     statusRaw = ot.find("div", id="editstatus")
@@ -133,11 +132,11 @@ def parseSeries(req):
     if ot.find("div", id="showopublisher").find("a") is not None:
         originalPublisher = {"name": ot.find("div", id="showopublisher").find("a").text, "link": ot.find("div", id="showopublisher").find("a").get("href")}
     else:
-        originalPublisher = {"name": ot.find("div", id="showopublisher").text[1:], "link": None}
+        originalPublisher = None
     if ot.find("div", id="showepublisher").find("a") is not None:
         englishPublisher = {"name": ot.find("div", id="showepublisher").find("a").text, "link": ot.find("div", id="showepublisher").find("a").get("href")}
     else:
-        englishPublisher = {"name": ot.find("div", id="showepublisher").text[1:], "link": None}
+        englishPublisher = None
     releaseFreq = ot.find_all("h5", class_="seriesother")[13].next_sibling.strip()
 
     # Two Thirds (tt)
@@ -148,7 +147,30 @@ def parseSeries(req):
     description = descriptionRaw.text[:-1]
 
     associatedNames = [i for i in tt.find("div", id="editassociated").contents if str(i) != "<br/>"]
-    
+
+    tableBody = tt.find("table", id="myTable")
+    latestChapters = []
+    if tableBody is not None:
+        for rel in tableBody.find("tbody").find_all("tr"):
+            date = re.sub('\s+', '', rel.select("td")[0].text)
+            group = rel.select("td")[1].find("a").text
+            groupLink = rel.select("td")[1].find("a").get("href")
+            release = rel.select("td")[2].find("a").get("title")
+            releaseLink = rel.select("td")[2].find("a").get("href")
+            latestChapters.append({
+                "date": date,
+                "group": {
+                    "name": group,
+                    "link": groupLink
+                },
+                "release": {
+                    "name": release,
+                    "link": releaseLink
+                }
+            })
+    else:
+        latestChapters = None
+
     result = {
         "title": title,
         "image": image,
@@ -167,6 +189,7 @@ def parseSeries(req):
         "english_publisher": englishPublisher,
         "release_freq": releaseFreq,
         "description": description,
-        "associated_names": associatedNames
+        "associated_names": associatedNames,
+        "latest_chapters": latestChapters
     }
     return result
