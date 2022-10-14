@@ -35,7 +35,7 @@ def parseSearch(req):
         image = imageBody.find("img").get("src")
         if image.endswith("noimagemid.jpg"):
             image = None
-        imageBody.find("div", class_="search_ratings").find("span", class_="orgjp").decompose()
+        imageBody.find("div", class_="search_ratings").find("span").decompose()
         searchRating = re.sub(r'[()]', '', imageBody.find("div", class_="search_ratings").text.strip())
 
         ogDescription = body.find(text=True, recursive=False).strip()
