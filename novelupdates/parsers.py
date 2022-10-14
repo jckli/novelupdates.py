@@ -130,11 +130,11 @@ def parseSeries(req):
     if ot.find("div", id="showopublisher").find("a") is not None:
         originalPublisher = {"name": ot.find("div", id="showopublisher").find("a").text, "link": ot.find("div", id="showopublisher").find("a").get("href")}
     else:
-        originalPublisher = {"name": ot.find("div", id="showopublisher").text, "link": None}
+        originalPublisher = {"name": ot.find("div", id="showopublisher").text[1:], "link": None}
     if ot.find("div", id="showepublisher").find("a") is not None:
         englishPublisher = {"name": ot.find("div", id="showepublisher").find("a").text, "link": ot.find("div", id="showepublisher").find("a").get("href")}
     else:
-        englishPublisher = {"name": ot.find("div", id="showepublisher").text, "link": None}
+        englishPublisher = {"name": ot.find("div", id="showepublisher").text[1:], "link": None}
     releaseFreq = ot.find_all("h5", class_="seriesother")[13].next_sibling.strip()
 
     result = {
