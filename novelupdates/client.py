@@ -38,3 +38,20 @@ class Client:
         """
         req = self.req.get(f"https://www.novelupdates.com/?s={name}")
         return parsers.parseSearch(req)
+
+    def series_info(self, series_id):
+        """Gets information about a series.
+
+        Parameters
+        ----------
+        id : :class:`int`
+            The id of the series. (/series/{ID})
+
+        Returns
+        -------
+        :class:`dict`
+            A dictionary containing information about the series.
+            Contains all information and links for the series.
+        """
+        req = self.req.get(f"https://www.novelupdates.com/series/{series_id}")
+        return parsers.parseSeries(req)
