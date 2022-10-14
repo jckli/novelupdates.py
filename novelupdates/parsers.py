@@ -76,3 +76,83 @@ def parseSearch(req):
         })
     return results
 
+def parseSeries(req):
+    soup = bs(req.text, "html.parser")
+    page = soup.find("div", class_="w-blog-content")
+    body = page.find("div", class_="g-cols wpb_row offset_default")
+    ot = body.find("div", class_="one-third").find("div", class_="wpb_text_column").find("div", class_="wpb_wrapper")
+    tt = body.find("div", class_="two-thirds").find("div", class_="wpb_text_column").find("div", class_="wpb_wrapper")
+
+    title = page.find("div", class_="seriestitlenu").text
+    image = ot.find("div", class_="seriesimg").find("img").get("src")
+    typeRaw = ot.find("div", id="showtype")
+    typeText = typeRaw.find("a").text + " " + typeRaw.find("span").text
+    type = {"name": typeText, "link": typeRaw.find("a").get("href")}
+
+    genre = []
+    for g in ot.find("div", id="seriesgenre").find_all("a"):
+        genre.append({"name": g.text, "link": g.get("href"), "description": g.get("title")})
+
+    tags = []
+    for t in ot.find("div", id="showtags").find_all("a"):
+        tags.append({"name": t.text, "link": t.get("href"), "description": t.get("title")})
+    
+    rating = []
+    tempR = 5
+    overallRating = re.sub(r'[()]', '', ot.find_all("h5", class_="seriesother")[3].find("span").text)
+    rating.append({"name": "Overall", "rating": overallRating})
+    for r in ot.find("table", id="myrates").find("tbody").find_all("tr"):
+        rating.append({"name": tempR, "rating": r.select("td")[1].text.strip()})
+        tempR -= 1
+    
+    language = {"name": ot.find("div", id="showlang").find("a").text, "link": ot.find("div", id="showlang").find("a").get("href")}
+
+    authors = []
+    if ot.find("div", id="showauthors").find_all("a"):
+        for author in ot.find("div", id="showauthors").find_all("a"):
+            authors.append({"name": author.text, "link": author.get("href")})
+    else:
+        authors.append({"name": ot.find("div", id="showauthors").find("span").text[0:], "link": None})
+    artists = []
+    if ot.find("div", id="showartists").find_all("a"):
+        for artist in ot.find("div", id="showartists").find_all("a"):
+            artists.append({"name": artist.text, "link": artist.get("href")})
+    else:
+        artists.append({"name": ot.find("div", id="showartists").find("span").text[0:], "link": None})
+    
+    year = ot.find("div", id="edityear").text[1:]
+    statusRaw = ot.find("div", id="editstatus")
+    if "<br>" in statusRaw:
+        statusRaw.find("br").replace_with("\n")
+    status = statusRaw.text[1:]
+    licensed = ot.find("div", id="showlicensed").text[1:]
+    completelyTranslated = ot.find("div", id="showtranslated").text[1:]
+    if ot.find("div", id="showopublisher").find("a") is not None:
+        originalPublisher = {"name": ot.find("div", id="showopublisher").find("a").text, "link": ot.find("div", id="showopublisher").find("a").get("href")}
+    else:
+        originalPublisher = {"name": ot.find("div", id="showopublisher").text, "link": None}
+    if ot.find("div", id="showepublisher").find("a") is not None:
+        englishPublisher = {"name": ot.find("div", id="showepublisher").find("a").text, "link": ot.find("div", id="showepublisher").find("a").get("href")}
+    else:
+        englishPublisher = {"name": ot.find("div", id="showepublisher").text, "link": None}
+    releaseFreq = ot.find_all("h5", class_="seriesother")[13].next_sibling.strip()
+
+    result = {
+        "title": title,
+        "image": image,
+        "type": type,
+        "genre": genre,
+        "tags": tags,
+        "rating": rating,
+        "language": language,
+        "authors": authors,
+        "artists": artists,
+        "year": year,
+        "status": status,
+        "licensed": licensed,
+        "completely_translated": completelyTranslated,
+        "original_publisher": originalPublisher,
+        "english_publisher": englishPublisher,
+        "release_freq": releaseFreq
+    }
+    return result
