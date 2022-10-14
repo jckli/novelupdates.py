@@ -15,7 +15,7 @@ class Client:
 
         Returns
         -------
-        :class:`dict`
+        :class:`list`
             A dictionary containing the latest novel updates from NovelUpdates.
             Contains all information and links for each update.
         """
@@ -23,7 +23,18 @@ class Client:
         return parsers.parseFeed(req)
 
     def search_series(self, name):
-        """Searches for a series and gets back the top 10 results.
+        """Searches for a series and gets back the top 25 results (first page).
+
+        Parameters
+        ----------
+        name : :class:`str`
+            The name of the series to search for.
+
+        Returns
+        -------
+        :class:`list`
+            A dictionary containing the top 25 results for the search.
+            Contains all information and links for each result.
         """
         req = self.req.get(f"https://www.novelupdates.com/?s={name}")
         return parsers.parseSearch(req)
