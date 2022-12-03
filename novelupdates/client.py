@@ -54,4 +54,24 @@ class Client:
             Contains all information and links for the series.
         """
         req = self.req.get(f"https://www.novelupdates.com/series/{series_id}")
-        return parsers.parseSeries(req)
+        return parsers.parseSeries(req, extras=False)
+
+    def series_groups(self, series_id):
+        """Gets the groups that are translating a series.
+
+        Parameters
+        ----------
+        id : :class:`int`
+            The id of the series. (/series/{ID})
+
+        Returns
+        -------
+        :class:`list`
+            A dictionary containing information about the groups.
+            Contains all information and links for each group.
+        """
+        req = self.req.get(f"https://www.novelupdates.com/series/{series_id}")
+        extras = parsers.parseSeries(req, extras=True)
+        data = {"action": "nd_getgroupnovel", "mygrr": extras["grr_groups"], "mypostid": extras["postid"]}
+        req2 = self.req.post("https://www.novelupdates.com/wp-admin/admin-ajax.php", data=data)
+        return req2.text
